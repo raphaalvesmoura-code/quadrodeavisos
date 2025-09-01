@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quadro de Avisos · Services4IT</title>
+  <style>
+    :root { --bg:#0f1115; --card:#171923; --muted:#9aa4b2; --text:#e7ecf3; --primary:#5b8cff; --ring:#2b3757; }
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;background:linear-gradient(#0f1115,#0c1017);color:var(--text)}
+    .container{max-width:1100px;margin:0 auto;padding:16px}
+    header{position:sticky;top:0;backdrop-filter:saturate(1.2) blur(8px);background:#0f1115cc;border-bottom:1px solid #1f2430;z-index:10}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .btn{border:1px solid #2a3142;background:#1a2030;color:#e7ecf3;padding:10px 14px;border-radius:12px;cursor:pointer}
+    .btn.ghost{background:transparent}
+    .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+    .card{background:var(--card);border:1px solid #1f2430;border-radius:16px}
+    .card .content{padding:16px}
+    input,select,textarea{width:100%;padding:10px 12px;border-radius:12px;border:1px solid #2a3142;background:#131826;color:var(--text)}
+    label{font-size:12px;color:var(--muted);margin-bottom:6px;display:block}
+    .grid{display:grid;gap:12px}
+    @media(min-width:760px){.grid-2{grid-template-columns:1fr 1fr}.grid-3{grid-template-columns:repeat(3,1fr)}}
+    .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:#1b2231;border:1px solid #293046;color:#cbd5e1;font-size:12px}
+    .toolbar{align-items:center}
+    .post{display:flex;flex-direction:column;height:100%}
+    .muted{color:var(--muted)}
+    .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto}
+    .pill{border:1px solid #2b3350;border-radius:999px;padding:4px 8px;font-size:12px;color:#b9c4d3}
+    .title{font-weight:700}
+    .space{height:10px}
+    .empty{padding:40px;text-align:center;color:var(--muted)}
+    .kbar{display:flex;gap:8px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container row" style="justify-content:space-between;align-items:center;padding:12px 16px;">
+      <div class="row" style="align-items:center">
+        <div style="width:36px;height:36px;border-radius:12px;background:#19233a;border:1px solid #243050;display:grid;place-items:center">📣</div>
+        <div>
+          <div class="title">Services4IT · Quadro de Avisos</div>
+          <div class="muted" style="font-size:12px;line-height:1">Atualize recados e a equipe acessa via link.</div>
+        </div>
+      </div>
+      <button id="btnNew" class="btn primary">+ Novo aviso</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Toolbar -->
+    <div class="card"><div class="content">
+      <div class="row toolbar">
+        <div style="flex:1;min-width:220px">
+          <label>Pesquisar</label>
+          <input id="q" placeholder="título, conteúdo ou #tag" />
+        </div>
+        <div style="min-width:180px">
+          <label>Categoria</label>
+          <select id="cat">
+            <option value="all">Todas</option>
+          </select>
+        </div>
+        <div style="min-width:180px">
+          <label>Ordenar</label>
+          <select id="sort">
+            <option value="newest">Mais recentes</option>
+            <option value="oldest">Mais antigos</option>
+          </select>
+        </div>
+        <div>
+          <label>Status</label>
+          <select id="tab">
+            <option value="ativos">Ativos</option>
+            <option value="arquivados">Arquivados</option>
+          </select>
+        </div>
+      </div>
+    </div></div>
+
+    <div class="space"></div>
+
+    <!-- Form Novo Aviso -->
+    <div id="formWrap" class="card" style="display:none"><div class="content">
+      <form id="form" class="grid">
+        <div class="grid grid-2">
+          <div>
+            <label>Título</label>
+            <input id="fTitle" required placeholder="Ex.: Comunicado importante" />
+          </div>
+          <div>
+            <label>Categoria</label>
+            <select id="fCat"></select>
+          </div>
+        </div>
+        <div>
+          <label>Conteúdo</label>
+          <textarea id="fContent" rows="5" required placeholder="Escreva o recado aqui…"></textarea>
+        </div>
+        <div class="grid grid-2">
+          <div>
+            <label>Tags (separe por vírgula)</label>
+            <input id="fTags" placeholder="urgente, equipe-a, clientes" />
+          </div>
+          <div>
+            <label>Fixar no topo?</label>
+            <select id="fPinned">
+              <option value="false">Não</option>
+              <option value="true">Sim</option>
+            </select>
+          </div>
+        </div>
+        <div class="row" style="justify-content:flex-end">
+          <button type="button" id="fCancel" class="btn ghost">Cancelar</button>
+          <button class="btn primary">Publicar aviso</button>
+        </div>
+      </form>
+    </div></div>
+
+    <div class="space"></div>
+
+    <!-- Fixados -->
+    <section id="pinnedSection" style="display:none">
+      <div class="muted" style="font-weight:700;margin:8px 4px">📌 Fixados</div>
+      <div id="pinned" class="grid grid-3"></div>
+      <div class="space"></div>
+    </section>
+
+    <!-- Lista -->
+    <section>
+      <div id="list" class="grid grid-3"></div>
+      <div id="empty" class="empty" style="display:none">Nenhum aviso por aqui…</div>
+    </section>
+
+    <div class="space"></div>
+    <footer class="muted" style="text-align:center;padding:24px 0;font-size:12px;border-top:1px solid #1f2430">Quadro de Avisos · Personalize em “CONFIG” no topo do script.</footer>
+  </div>
+
+  <script>
+  // ========================
+  // CONFIG (edite aqui)
+  // ========================
+  const CONFIG = {
+    company: 'Services4IT',
+    categories: [
+      { id: 'geral', label: 'Geral' },
+      { id: 'operacao', label: 'Operação' },
+      { id: 'rh', label: 'RH' },
+      { id: 'comunicados', label: 'Comunicados' },
+      { id: 'ti', label: 'TI' },
+      { id: 'eventos', label: 'Eventos' }
+    ],
+    sample: [
+      { id:'p1', title:'Manutenção no Office 365 concluída', content:'A instabilidade global foi normalizada. Caso notem algo, abrir chamado no canal #suporte.', category:'ti', tags:['office365','status'], dateISO:new Date(Date.now()-2*60*60*1000).toISOString(), pinned:true, archived:false, author:'Rapha' },
+      { id:'p2', title:'Reunião semanal – Segunda 9h', content:'Agenda: backlog Opera/Simphony, pendências Essendi, e highlights da semana.', category:'operacao', tags:['reunião','agenda'], dateISO:new Date(Date.now()-24*60*60*1000).toISOString(), pinned:false, archived:false, author:'Rapha' },
+      { id:'p3', title:'Aniversariantes da semana', content:'Parabéns para Lucca (qua) e Janaína (sex)! 🎉', category:'eventos', tags:['aniversário'], dateISO:new Date(Date.now()-48*60*60*1000).toISOString(), pinned:false, archived:false, author:'RH' }
+    ]
+  }
+
+  // ========================
+  // State + Storage
+  // ========================
+  const LS_KEY = 'bb.posts.v1'
+  const state = {
+    posts: loadPosts(),
+    query: '',
+    category: 'all',
+    sort: 'newest',
+    tab: 'ativos',
+  }
+  function loadPosts(){
+    try { const raw = localStorage.getItem(LS_KEY); if(raw) return JSON.parse(raw) } catch {}
+    return CONFIG.sample
+  }
+  function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state.posts)) }catch{} }
+
+  // ========================
+  // Elements
+  // ========================
+  const el = {
+    q: document.getElementById('q'),
+    cat: document.getElementById('cat'),
+    sort: document.getElementById('sort'),
+    tab: document.getElementById('tab'),
+    list: document.getElementById('list'),
+    empty: document.getElementById('empty'),
+    pinnedWrap: document.getElementById('pinnedSection'),
+    pinned: document.getElementById('pinned'),
+    btnNew: document.getElementById('btnNew'),
+    formWrap: document.getElementById('formWrap'),
+    form: document.getElementById('form'),
+    fTitle: document.getElementById('fTitle'),
+    fCat: document.getElementById('fCat'),
+    fContent: document.getElementById('fContent'),
+    fTags: document.getElementById('fTags'),
+    fPinned: document.getElementById('fPinned'),
+    fCancel: document.getElementById('fCancel'),
+  }
+
+  // Fill categories
+  CONFIG.categories.forEach(c=>{
+    const o=document.createElement('option');o.value=c.id;o.textContent=c.label;el.cat.appendChild(o)
+    const o2=o.cloneNode(true); el.fCat.appendChild(o2)
+  })
+
+  // Events
+  el.q.oninput = ()=>{ state.query=el.q.value.toLowerCase(); render() }
+  el.cat.onchange= ()=>{ state.category=el.cat.value; render() }
+  el.sort.onchange=()=>{ state.sort=el.sort.value; render() }
+  el.tab.onchange = ()=>{ state.tab=el.tab.value; render() }
+  el.btnNew.onclick = ()=>{ el.formWrap.style.display = el.formWrap.style.display==='none'?'block':'none' }
+  el.fCancel.onclick = ()=>{ el.form.reset(); el.formWrap.style.display='none' }
+  el.form.onsubmit = (e)=>{
+    e.preventDefault()
+    const post = {
+      id: crypto.randomUUID(),
+      title: el.fTitle.value.trim(),
+      content: el.fContent.value.trim(),
+      category: el.fCat.value,
+      tags: el.fTags.value.split(',').map(t=>t.trim()).filter(Boolean),
+      dateISO: new Date().toISOString(),
+      pinned: el.fPinned.value==='true',
+      archived: false,
+      author: 'Admin'
+    }
+    if(!post.title || !post.content) return
+    state.posts = [post, ...state.posts]
+    save(); el.form.reset(); el.formWrap.style.display='none'; render()
+  }
+
+  // Helpers
+  const fmt = iso => new Date(iso).toLocaleString()
+
+  // Actions
+  function togglePin(id){ state.posts = state.posts.map(p=>p.id===id?{...p,pinned:!p.pinned}:p); save(); render() }
+  function toggleArchive(id){ state.posts = state.posts.map(p=>p.id===id?{...p,archived:!p.archived}:p); save(); render() }
+  function removePost(id){ state.posts = state.posts.filter(p=>p.id!==id); save(); render() }
+
+  // Render
+  function render(){
+    const filtered = state.posts.filter(p=> state.tab==='ativos' ? !p.archived : p.archived)
+      .filter(p=> state.category==='all' ? true : p.category===state.category)
+      .filter(p=>{
+        if(!state.query) return true
+        const q=state.query
+        return p.title.toLowerCase().includes(q) || p.content.toLowerCase().includes(q) || (p.tags||[]).join(' ').toLowerCase().includes(q)
+      })
+      .sort((a,b)=> state.sort==='newest' ? new Date(b.dateISO)-new Date(a.dateISO) : new Date(a.dateISO)-new Date(b.dateISO))
+
+    const pinned = filtered.filter(p=>p.pinned && !p.archived)
+    const rest = filtered.filter(p=>!p.pinned)
+
+    // pinned
+    el.pinned.innerHTML=''
+    el.pinnedWrap.style.display = pinned.length? 'block':'none'
+    pinned.forEach(p=> el.pinned.appendChild(postCard(p)))
+
+    // list
+    el.list.innerHTML=''
+    rest.forEach(p=> el.list.appendChild(postCard(p)))
+
+    el.empty.style.display = (pinned.length===0 && rest.length===0) ? 'block' : 'none'
+
+    // header title update
+    document.title = `${CONFIG.company} · Quadro de Avisos`
+  }
+
+  function postCard(p){
+    const card = document.createElement('div'); card.className='card post'
+    const c = document.createElement('div'); c.className='content'; card.appendChild(c)
+
+    // header row
+    const top = document.createElement('div'); top.className='row'; top.style.justifyContent='space-between'; c.appendChild(top)
+    const left = document.createElement('div')
+    const h = document.createElement('div'); h.className='title'; h.textContent=p.title; left.appendChild(h)
+    const meta = document.createElement('div'); meta.className='muted'; meta.style.fontSize='12px'; meta.textContent = `${labelOf(p.category)} · ${p.author||'—'} · ${fmt(p.dateISO)}`; left.appendChild(meta)
+    top.appendChild(left)
+
+    const kbar = document.createElement('div'); kbar.className='kbar'
+    const bPin = mkBtn(p.pinned? 'Desafixar':'Fixar', ()=>togglePin(p.id), true)
+    const bArc = mkBtn(p.archived? 'Desarquivar':'Arquivar', ()=>toggleArchive(p.id), true)
+    const bDel = mkBtn('Remover', ()=>{ if(confirm('Remover aviso?')) removePost(p.id) }, true)
+    kbar.append(bPin,bArc,bDel); top.appendChild(kbar)
+
+    // content
+    const body = document.createElement('div'); body.style.whiteSpace='pre-wrap'; body.style.lineHeight='1.5'; body.textContent=p.content; c.appendChild(body)
+
+    // tags
+    const tags = document.createElement('div'); tags.className='tags'
+    ;(p.tags||[]).forEach(t=>{ const x=document.createElement('span'); x.className='pill'; x.textContent='#'+t; tags.appendChild(x) })
+    c.appendChild(tags)
+
+    return card
+  }
+
+  function labelOf(id){ return (CONFIG.categories.find(c=>c.id===id)||{}).label || id }
+  function mkBtn(text,fn,ghost=false){ const b=document.createElement('button'); b.className='btn'+(ghost?' ghost':''); b.textContent=text; b.onclick=fn; return b }
+
+  render()
+  </script>
+</body>
+</html>
